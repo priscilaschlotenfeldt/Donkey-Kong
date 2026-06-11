@@ -63,7 +63,7 @@ void fazchao(objeto *m){
         velocidadeY = 0;
     }
     //Se o mario tenta entrar por baixo da caixa, ele é teletransportado de volta pra baixo
-    if(mario.linha >= TAMANHO * (m->linha - 0.3) && mario.linha <= TAMANHO * (m->linha) && mario.coluna <= TAMANHO * (m->coluna + 0.6667) && mario.coluna >= TAMANHO * (m->coluna - 0.3334)){
+    if(mario.linha >= TAMANHO * (m->linha - 0.3) && mario.linha <= TAMANHO * (m->linha - 0.2) && mario.coluna <= TAMANHO * (m->coluna + 0.6667) && mario.coluna >= TAMANHO * (m->coluna - 0.3334)){
         mario.linha = TAMANHO * (m->linha);
     }
     //se ele tentar entrar na caixa pela esquerda ele volta pro lugar dele
@@ -98,24 +98,18 @@ void fazescada(objeto *m){
 
 void fazinimigo(vilao *m){
     //pisou matou
-    if(mario.linha >= (m->linha - (TAMANHO * 1.1)) && mario.linha <=  (m->linha - (TAMANHO * 0.9)) && mario.coluna <= (m->coluna + TAMANHO * (0.6667)) && mario.coluna >= (m->coluna - TAMANHO * (0.6667))){
-        velocidadeY = (FORCA_DO_PULO * 0.5);
+    if(mario.linha >= (m->linha - (TAMANHO * 1.2)) && mario.linha <=  (m->linha - (TAMANHO * 0.5)) && mario.coluna <= (m->coluna + TAMANHO * (0.6667)) && mario.coluna >= (m->coluna - TAMANHO * (0.6667))){
+        velocidadeY = (FORCA_DO_PULO * 0.75);
         *m = inimigo_morto;
         pontos += 1000;
     }
 
-    //encostou morreu esq
-    else if(invulnerabilidade < 0 && mario.linha >= (m->linha - (TAMANHO * 0.9999999)) && mario.linha <= (m->linha + (TAMANHO * 0.5)) && mario.coluna <= m->coluna && mario.coluna >= (m->coluna - (TAMANHO * 0.6667))){
+    //encostou morreu
+    else if((invulnerabilidade < 0) && mario.linha >= (m->linha - (TAMANHO * 0.9999999)) && mario.linha <= (m->linha + (TAMANHO * 0.5)) && mario.coluna <= (m->coluna + (TAMANHO * 0.67)) && mario.coluna >= (m->coluna - (TAMANHO * 0.67))){
         vidas--;
         mario = spawnpoint;
         invulnerabilidade = (60 * 3);
     }                
-    //encostou morreu dir
-    else if(invulnerabilidade < 0 && mario.linha >= (m->linha - (TAMANHO * 0.9999999)) && mario.linha <= (m->linha + (TAMANHO * 0.5)) && mario.coluna <= (m->coluna + (TAMANHO * 0.6667)) && mario.coluna >= m->coluna){
-        vidas--;
-        mario = spawnpoint;
-        invulnerabilidade = (60 * 3);
-    }
     //mov dir ou troca
     else if(m->mov == 'D'){
         int c = (int)(m->coluna / TAMANHO);
@@ -142,16 +136,11 @@ void fazinimigo(vilao *m){
 }
 
 void safezone(objeto *m){
-    if((mario.linha >= TAMANHO * (m->linha - 1)) && (mario.linha <= TAMANHO * (m->linha + 0.5)) && (mario.coluna <= TAMANHO * (m->coluna + 0.6667)) && mario.coluna >= TAMANHO * (m->coluna - 0.3334)){
+    if((mario.linha >= TAMANHO * (m->linha - 1)) && (mario.linha <= TAMANHO * (m->linha + 1)) && (mario.coluna <= TAMANHO * (m->coluna + 0.6667)) && mario.coluna >= TAMANHO * (m->coluna - 0.3334)){
         spawnpoint.linha = TAMANHO * m->linha;
         spawnpoint.coluna = TAMANHO * m->coluna;
         mapa[m->linha][m->coluna] = ' ';
     }
-}
-
-void fazbarril(personagem *m){
-
-
 }
 
 void desenha_objeto(objeto *m){
@@ -346,17 +335,17 @@ int main(void){
                         if(probabilidade < ((x + 1) * (66 * (QUANT_mapas - i)))){
                             break;
                         }
-                        else if(!(probabilidade % ((x + 1) * ( 66 * (QUANT_mapas - i))))){
+                        else if(!(probabilidade % ((x + 1) * (66 * (QUANT_mapas - i))))){
                             bomba[x].coluna = (rand() % (COLUNA * TAMANHO));
                             bomba[x].linha = (2 * TAMANHO);
                         }
                     }
-                else//Na ultima fase, o bagulho fica diferente
+                else//Na ultima fase, o bagulho fica frenético
                     for(int x = 2; x < 999; x++){
-                        if(!(probabilidade % ((x + 1) * (66 * (QUANT_mapas - i))))){
+                        if(!(probabilidade % ((x + 1) * (60 * (QUANT_mapas - i))))){
                             bomba[x].coluna = (rand() % (COLUNA * TAMANHO));
-                            bomba[x].linha = (2.5 * TAMANHO);
-                            velocidadeYb = TAMANHO * 10;
+                            bomba[x].linha = (3 * TAMANHO);
+                            velocidadeYb = TAMANHO * 12;
                         }
                     }
                 
@@ -371,10 +360,10 @@ int main(void){
                 velocidadeYb += GRAVIDADE * tempo;
 
                 for(int z = 0; z < 1000; z++){
-                    bomba[z].linha -= velocidadeYb * tempo * 0.5;
+                    bomba[z].linha -= velocidadeYb * tempo * 0.7;
                     DrawRectangle(bomba[z].coluna, bomba[z].linha, TAMANHO, TAMANHO, PURPLE);
                     //quando atingido por bomba ele perde uma vida e é teleportado para o spp
-                    if((invulnerabilidade < 0) && (mario.linha >= (bomba[z].linha - TAMANHO)) && (mario.linha <= (bomba[z].linha + TAMANHO)) && (mario.coluna <= (bomba[z].coluna + (TAMANHO * 0.6667))) && mario.coluna >= (bomba[z].coluna - (TAMANHO * 0.3334))){
+                    if((invulnerabilidade < 0) && (mario.linha >= (bomba[z].linha - TAMANHO)) && (mario.linha <= (bomba[z].linha + TAMANHO)) && (mario.coluna <= (bomba[z].coluna + (TAMANHO * 0.6667))) && mario.coluna >= (bomba[z].coluna - (TAMANHO * 0.6667))){
                         mario = spawnpoint;
                         vidas--;
                         invulnerabilidade = (60 * 3);
