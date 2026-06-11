@@ -78,7 +78,7 @@ clean:
 
 run: all
 ifeq ($(PLATFORM),Windows)
-	$(BIN_DIR)/main$(EXT)
+	$(BIN_DIR)\main$(EXT)
 else
 	./$(BIN_DIR)/main$(EXT)
 endif
