@@ -1,48 +1,84 @@
-# Nome dos executáveis finais
-TARGET = bin/main
-GAME_TARGET = bin/jogo
+# =============================================================================
+# Makefile Cross-Platform — Donkey Kong
+# Detecta automaticamente: Windows (MinGW), Linux
+# =============================================================================
 
-# Compilador e flags
+# ── Detecção do Sistema Operacional ──────────────────────────────────────────
+ifeq ($(OS),Windows_NT)
+    PLATFORM := Windows
+else
+    PLATFORM := Linux
+endif
+
+# ── Compilador ────────────────────────────────────────────────────────────────
 CC = gcc
-CFLAGS = -Wall -std=c99 -Iinclude
-# Para Linux, o Raylib geralmente precisa de: -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
-# Pastas
+# ── Flags comuns ─────────────────────────────────────────────────────────────
+CFLAGS = -Wall -std=c99 -g -Iinclude
+
+# ── Flags e extensões por plataforma ─────────────────────────────────────────
+ifeq ($(PLATFORM),Windows)
+    # No Windows com MinGW, usamos a lib estática em lib/windows/
+    LDFLAGS   = -Llib/windows -lraylib -lopengl32 -lgdi32 -lwinmm -lshell32
+    EXT       = .exe
+    MKDIR     = if not exist "$(BIN_DIR)" mkdir "$(BIN_DIR)"
+    MKDIR_OBJ = if not exist "$(OBJ_DIR)" mkdir "$(OBJ_DIR)"
+    RM        = rmdir /s /q
+else
+    # Linux — usa o raylib instalado no sistema (via pkg-config)
+    # Se pkg-config não funcionar, troca por: -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+    LDFLAGS   = $(shell pkg-config --libs raylib 2>/dev/null || echo "-lraylib -lGL -lm -lpthread -ldl -lrt -lX11")
+    CFLAGS   += $(shell pkg-config --cflags raylib 2>/dev/null)
+    EXT       =
+    MKDIR     = mkdir -p $(BIN_DIR)
+    MKDIR_OBJ = mkdir -p $(OBJ_DIR)
+    RM        = rm -rf
+endif
+
+# ── Pastas ────────────────────────────────────────────────────────────────────
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
 
-# Compila apenas os arquivos-fonte ativos do projeto
-SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/menu.c $(SRC_DIR)/opcoes.c 
+# ── Alvos finais ──────────────────────────────────────────────────────────────
+TARGET      = $(BIN_DIR)/main$(EXT)
+GAME_TARGET = $(BIN_DIR)/jogo$(EXT)
+
+# ── Fontes ────────────────────────────────────────────────────────────────────
+SRCS      = $(SRC_DIR)/main.c $(SRC_DIR)/menu.c $(SRC_DIR)/opcoes.c
 GAME_SRCS = $(SRC_DIR)/jogo_definitivo.c
 
-# Define os arquivos .o correspondentes dentro da pasta obj/
-OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+OBJS      = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 GAME_OBJS = $(GAME_SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-# Regra padrão
-all: $(TARGET) $(GAME_TARGET)
+# ── Regras ────────────────────────────────────────────────────────────────────
+.PHONY: all clean run info
 
-# Regra para linkar os objetos e gerar o executável do menu
+all: info $(TARGET) $(GAME_TARGET)
+
+info:
+	@echo ">> Compilando para: $(PLATFORM)"
+
 $(TARGET): $(OBJS)
-	mkdir -p $(BIN_DIR)
+	$(MKDIR)
 	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
+	@echo ">> Menu compilado: $(TARGET)"
 
-# Regra para linkar os objetos e gerar o executável do mapa/jogo
 $(GAME_TARGET): $(GAME_OBJS)
-	mkdir -p $(BIN_DIR)
+	$(MKDIR)
 	$(CC) $(GAME_OBJS) -o $(GAME_TARGET) $(LDFLAGS)
+	@echo ">> Jogo compilado: $(GAME_TARGET)"
 
-# Regra para compilar os arquivos .c em arquivos .o
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	mkdir -p $(OBJ_DIR)
+	$(MKDIR_OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Regra para limpar os arquivos gerados (limpeza de build)
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	$(RM) $(OBJ_DIR) $(BIN_DIR)
 
-# Regra para compilar e rodar logo em seguida
 run: all
-	./bin/main
+ifeq ($(PLATFORM),Windows)
+	$(BIN_DIR)/main$(EXT)
+else
+	./$(BIN_DIR)/main$(EXT)
+endif

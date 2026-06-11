@@ -1,4 +1,4 @@
-#include "raylib.h"
+#include <raylib.h>//muda para "" se não estiver rodando assim
 #include <stdio.h>
 #include "opcoes.h"
 

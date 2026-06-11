@@ -1,9 +1,9 @@
-#include <raylib.h>
+#include <raylib.h>// colocar "" se ñ for
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-//cada pixel agorá serão equivalente a um quadrado de 35 por 35
+//cada pixel agorá serão equivalente a um quadrado de 38 por 38
 #define TAMANHO 38
 
 #define GRAVIDADE (-50 * TAMANHO)
@@ -35,6 +35,7 @@ typedef struct{
 
 int chao = 0;
 int escada = 0;
+int invulnerabilidade = (60 * 3);
 double velocidadeY = 0;
 double velocidadeYb = 0;
 double tempo = 0;
@@ -97,21 +98,23 @@ void fazescada(objeto *m){
 
 void fazinimigo(vilao *m){
     //pisou matou
-    if(mario.linha >= (m->linha - (TAMANHO * 1.2)) && mario.linha <=  (m->linha - (TAMANHO * 0.3)) && mario.coluna <= (m->coluna + TAMANHO * (0.6667)) && mario.coluna >= (m->coluna - TAMANHO * (0.3334))){
+    if(mario.linha >= (m->linha - (TAMANHO * 1.1)) && mario.linha <=  (m->linha - (TAMANHO * 0.9)) && mario.coluna <= (m->coluna + TAMANHO * (0.6667)) && mario.coluna >= (m->coluna - TAMANHO * (0.6667))){
         velocidadeY = (FORCA_DO_PULO * 0.5);
         *m = inimigo_morto;
         pontos += 1000;
     }
 
     //encostou morreu esq
-    else if(mario.linha >= (m->linha - (TAMANHO * 0.9999999)) && mario.linha <= (m->linha + (TAMANHO * 0.5)) && mario.coluna <= m->coluna && mario.coluna >= (m->coluna - (TAMANHO * 0.6667))){
+    else if(invulnerabilidade < 0 && mario.linha >= (m->linha - (TAMANHO * 0.9999999)) && mario.linha <= (m->linha + (TAMANHO * 0.5)) && mario.coluna <= m->coluna && mario.coluna >= (m->coluna - (TAMANHO * 0.6667))){
         vidas--;
         mario = spawnpoint;
+        invulnerabilidade = (60 * 3);
     }                
     //encostou morreu dir
-    else if(mario.linha >= (m->linha - (TAMANHO * 0.9999999)) && mario.linha <= (m->linha + (TAMANHO * 0.5)) && mario.coluna <= (m->coluna + (TAMANHO * 0.6667)) && mario.coluna >= m->coluna){
+    else if(invulnerabilidade < 0 && mario.linha >= (m->linha - (TAMANHO * 0.9999999)) && mario.linha <= (m->linha + (TAMANHO * 0.5)) && mario.coluna <= (m->coluna + (TAMANHO * 0.6667)) && mario.coluna >= m->coluna){
         vidas--;
         mario = spawnpoint;
+        invulnerabilidade = (60 * 3);
     }
     //mov dir ou troca
     else if(m->mov == 'D'){
@@ -186,8 +189,6 @@ void desenha_objeto(objeto *m){
 int main(void){
 
     srand(time(NULL));//serve para a movimentação aleatoria do bot
-    SetTargetFPS(60);//60 quadros por segundo
-
 
     FILE *arqmapas[QUANT_mapas];
 
@@ -262,6 +263,7 @@ int main(void){
         }
 
         InitWindow(TAMANHO * COLUNA, TAMANHO * LINHA, "Donkey Kong INF (DKINF)");
+        SetTargetFPS(60);//60 quadros por segundo
     
         int quant_inimigos = 0;
         vilao inimigos[51] = {};
@@ -290,7 +292,7 @@ int main(void){
         mario = spawnpoint;
 
         int probabilidade = 1;
-        personagem bomba[1000];
+        personagem bomba[1000] = {};
 
         objeto caixas[COLUNA][LINHA];
 
@@ -372,9 +374,10 @@ int main(void){
                     bomba[z].linha -= velocidadeYb * tempo * 0.5;
                     DrawRectangle(bomba[z].coluna, bomba[z].linha, TAMANHO, TAMANHO, PURPLE);
                     //quando atingido por bomba ele perde uma vida e é teleportado para o spp
-                    if((mario.linha >= (bomba[z].linha - TAMANHO)) && (mario.linha <= (bomba[z].linha + TAMANHO)) && (mario.coluna <= (bomba[z].coluna + (TAMANHO * 0.6667))) && mario.coluna >= (bomba[z].coluna - (TAMANHO * 0.3334))){
+                    if((invulnerabilidade < 0) && (mario.linha >= (bomba[z].linha - TAMANHO)) && (mario.linha <= (bomba[z].linha + TAMANHO)) && (mario.coluna <= (bomba[z].coluna + (TAMANHO * 0.6667))) && mario.coluna >= (bomba[z].coluna - (TAMANHO * 0.3334))){
                         mario = spawnpoint;
                         vidas--;
+                        invulnerabilidade = (60 * 3);
                     }
                 }
                 
@@ -408,6 +411,8 @@ int main(void){
             if(velocidadeYb < -vmax)
                 velocidadeYb = -vmax;
 
+            invulnerabilidade --;
+
 
             //----------------------------------------------------------------------------------
         }while (!WindowShouldClose());
@@ -422,6 +427,3 @@ int main(void){
 
 return 0;
 }
-
-
- 

@@ -8,6 +8,8 @@ int main(void)
 {
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Donkey Kong - Menu");
+    SetTargetFPS(60);
+    
     InitAudioDevice();
 
     MENU menu;
@@ -15,8 +17,6 @@ int main(void)
     iniciarMenu(&menu, SCREEN_WIDTH, SCREEN_HEIGHT);
     carregarRecursosMenu(&menu);
     iniciarOpcoes();
-
-    SetTargetFPS(60);
 
     while (!WindowShouldClose() && menu.telaAtual != TELA_SAIR)
     {

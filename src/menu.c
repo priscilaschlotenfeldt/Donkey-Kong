@@ -1,5 +1,5 @@
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32//isso aqui olha se o seu compilador é do padrão win
+#define WIN32_LEAN_AND_MEAN//daqui para baixo é só para não haver nenhum conflito entre coisas do win e do raylib
 #define NOGDI
 #define NOUSER
 #include <windows.h>
@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #endif
 
-#include "raylib.h"
+#include <raylib.h>// colocar "" se não for
 #include "menu.h"
 #include "opcoes.h"
 
