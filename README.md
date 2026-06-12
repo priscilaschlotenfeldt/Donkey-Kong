@@ -12,11 +12,13 @@ Jogo de plataforma estilo Donkey Kong desenvolvido em C usando a biblioteca [Ray
 | `S` / `↓` | Descer escada |
 | `Espaço` | Pular |
 | `ESC` | Sair |
+| `TAB` | Pause |
 
 ## Comandos do Makefile para rodar o jogo 
 
 ```bash
-make          # Compila tudo
-make run      # Compila e executa o menu
-make clean    # Remove arquivos compilados
+(LINUX)		(WINDOWS)	      # (Resultado)
+make		mingw32-make          # Compila tudo
+make run	mingw32-make run      # Compila e executa o menu
+make clean	mingw32-make clean    # Remove arquivos compilados
 ```

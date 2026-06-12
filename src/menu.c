@@ -174,9 +174,9 @@ static void iniciarNovoJogo(MENU *menu)
 {
     (void)menu;
 #ifdef _WIN32
-    ShellExecuteA(NULL, "open", "bin\\jogo.exe", NULL, NULL, 1);
+    ShellExecuteA(NULL, "open", "jogo.exe", NULL, NULL, 1);
 #else
-    system("./bin/jogo &");
+    system("./jogo &");
 #endif
 }
 
