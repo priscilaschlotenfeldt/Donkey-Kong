@@ -1,8 +1,10 @@
-#include "menu.h"
-#include "opcoes.h"
+#include "../include/menu.h"
+#include "../include/opcoes.h"
+#include "../include/jogo_definitivo.h"
 
 #define SCREEN_WIDTH 850
 #define SCREEN_HEIGHT 650
+
 
 int main(void)
 {

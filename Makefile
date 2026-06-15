@@ -41,19 +41,19 @@ OBJ_DIR = obj
 
 # ── Alvos finais ──────────────────────────────────────────────────────────────
 TARGET      = main$(EXT)
-GAME_TARGET = jogo$(EXT)
+#GAME_TARGET = jogo$(EXT)
 
 # ── Fontes ────────────────────────────────────────────────────────────────────
-SRCS      = $(SRC_DIR)/main.c $(SRC_DIR)/menu.c $(SRC_DIR)/opcoes.c
-GAME_SRCS = $(SRC_DIR)/jogo_definitivo.c
+SRCS      = $(SRC_DIR)/main.c $(SRC_DIR)/menu.c $(SRC_DIR)/opcoes.c $(SRC_DIR)/jogo_definitivo.c
+#GAME_SRCS = $(SRC_DIR)/jogo_definitivo.c
 
 OBJS      = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-GAME_OBJS = $(GAME_SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+#GAME_OBJS = $(GAME_SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 # ── Regras ────────────────────────────────────────────────────────────────────
 .PHONY: all clean run info
 
-all: info $(TARGET) $(GAME_TARGET)
+all: info $(TARGET)
 
 info:
 	@echo ">> Compilando para: $(PLATFORM)"
@@ -62,9 +62,9 @@ $(TARGET): $(OBJS)
 	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
 	@echo ">> Menu compilado: $(TARGET)"
 
-$(GAME_TARGET): $(GAME_OBJS)
-	$(CC) $(GAME_OBJS) -o $(GAME_TARGET) $(LDFLAGS)
-	@echo ">> Jogo compilado: $(GAME_TARGET)"
+#$(GAME_TARGET): $(GAME_OBJS)
+#	$(CC) $(GAME_OBJS) -o $(GAME_TARGET) $(LDFLAGS)
+#	@echo ">> Jogo compilado: $(GAME_TARGET)"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(MKDIR_OBJ)
@@ -74,7 +74,6 @@ clean:
 ifeq ($(PLATFORM),Windows)
 	@if exist $(OBJ_DIR) $(RM) $(OBJ_DIR)
 	@if exist main$(EXT) del /q main$(EXT)
-	@if exist jogo$(EXT) del /q jogo$(EXT)
 else
 	@rm -rf $(OBJ_DIR) main jogo
 endif

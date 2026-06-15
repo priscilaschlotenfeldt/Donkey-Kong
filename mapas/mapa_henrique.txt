@@ -3,10 +3,10 @@
 ZZZZZZZZZZZZZZZZZZZZZZZZZZZZHZ
                             H 
  DN                      E  H 
-ZHZZZ  Z   Z   Z   Z   ZZZZZHZ
+ZHZZZ  Z   Z   Z   Z   ZZZYZHZ
  H                        W H 
  SE  E  E  E  E  E  E   D W H 
-ZZZZZZZZZZZZZZZZZZZZZZZZHZZZHZ
+ZZZZZZZZZZZZZZZZZZZZZZZZHZYZHZ
                         H W H 
  DE     E     E     E   S W H 
 ZHZZZZZZZZZZZZZZZZZZZZZZZZZZHZ
@@ -18,13 +18,13 @@ ZHZZZ    Z     Z     Z     ZZZ
 ZZZZ  ZZZZ  ZZZZ  ZZZZ  ZZZZHZ
                             H 
    E         E              S 
-ZZZZZZZZZZZZZZZZZZ      ZZZZZZ
-               W      ZZZ W W 
- D    E        W D  ZZZ W W W 
-ZHZZZZZZZZ     ZZHZZZ W W W W 
+ZZZZZZZZZZZZZZZYZZ      XZYZYZ
+               W      XZY W W 
+ D    E        W D  XZY W W W 
+ZHZZZZZZZY     ZZHZZY W W W W 
  H       W       H  W W W W W 
  S    D  W    E  S  W W W W W 
-ZZZZZZHZZZZZZZZZZZZZZZZZZZZZZZ
+ZZZZZZHZZYZYZYZYZYZYYYYYYYYYYY
       H  W W W W W W W W W W W
  P    S  W W W W W W W W W W W
-ZZZZZZZZZZ W W W W W W W W W W
+YYYYYYYYYY W W W W W W W W W W

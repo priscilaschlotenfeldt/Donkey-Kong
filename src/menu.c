@@ -1,5 +1,5 @@
-#ifdef _WIN32//isso aqui olha se o seu compilador é do padrão win
-#define WIN32_LEAN_AND_MEAN//daqui para baixo é só para não haver nenhum conflito entre coisas do win e do raylib
+#ifdef _WIN32               // isso aqui olha se o seu compilador é do padrão win
+#define WIN32_LEAN_AND_MEAN // daqui para baixo é só para não haver nenhum conflito entre coisas do win e do raylib
 #define NOGDI
 #define NOUSER
 #include <windows.h>
@@ -7,10 +7,12 @@
 #else
 #include <stdlib.h>
 #endif
+#include <stdio.h>
 
-#include <raylib.h>// colocar "" se não for
-#include "menu.h"
-#include "opcoes.h"
+#include <raylib.h> // colocar "" se não for
+#include "../include/menu.h"
+#include "../include/opcoes.h"
+#include "../include/jogo_definitivo.h"
 
 #define FRAMES_MARIO_CORRENDO 4
 #define FRAMES_MARIO_ESCALANDO 3
@@ -24,7 +26,6 @@
 #define INICIO_X_SUBIR 760.0f
 #define TOPO_X_ESCADA 25.0f
 #define TOPO_Y_ESCADA 5.0f
-
 
 void iniciarMenu(MENU *menu, int screenWidth, int screenHeight)
 {
@@ -92,8 +93,8 @@ static void atualizarAnimacaoMenu(MENU *menu, float variacaoTempo, int SCREEN_WI
     }
     else if (menu->animacaoAtual == ANIMACAO_SUBINDO)
     {
-        menu->temporizadorEscalada +=variacaoTempo;
-        menu->posicaoMario.y -= VELOCIDADE_SUBIR *variacaoTempo;
+        menu->temporizadorEscalada += variacaoTempo;
+        menu->posicaoMario.y -= VELOCIDADE_SUBIR * variacaoTempo;
         if (menu->temporizadorEscalada >= DURACAO_ESCALAR)
         {
             menu->animacaoAtual = ANIMACAO_DESCENDO;
@@ -107,7 +108,7 @@ static void atualizarAnimacaoMenu(MENU *menu, float variacaoTempo, int SCREEN_WI
         {
             if (menu->posicaoMario.x > menu->posicaoAlvoEscalada.x)
             {
-                menu->posicaoMario.x -= VELOCIDADE_MARIO_MENU *variacaoTempo;
+                menu->posicaoMario.x -= VELOCIDADE_MARIO_MENU * variacaoTempo;
                 if (menu->posicaoMario.x < menu->posicaoAlvoEscalada.x)
                     menu->posicaoMario.x = menu->posicaoAlvoEscalada.x;
             }
@@ -123,7 +124,7 @@ static void atualizarAnimacaoMenu(MENU *menu, float variacaoTempo, int SCREEN_WI
         {
             if (menu->posicaoMario.y < 538.0f)
             {
-                menu->posicaoMario.y += VELOCIDADE_DESCER *variacaoTempo;
+                menu->posicaoMario.y += VELOCIDADE_DESCER * variacaoTempo;
                 if (menu->posicaoMario.y > 538.0f)
                     menu->posicaoMario.y = 538.0f;
             }
@@ -137,7 +138,7 @@ static void atualizarAnimacaoMenu(MENU *menu, float variacaoTempo, int SCREEN_WI
         }
     }
 
-    menu->temporizadorFrame +=variacaoTempo;
+    menu->temporizadorFrame += variacaoTempo;
     if (menu->temporizadorFrame >= FRAMES_DURACAO)
     {
         menu->temporizadorFrame = 0.0f;
@@ -156,28 +157,26 @@ static void atualizarAnimacaoMenu(MENU *menu, float variacaoTempo, int SCREEN_WI
         }
     }
 
-    menu->temporizadorFrameBarril +=variacaoTempo;
+    menu->temporizadorFrameBarril += variacaoTempo;
     if (menu->temporizadorFrameBarril >= 0.04f)
     {
         menu->temporizadorFrameBarril = 0.0f;
         menu->barrilFrame = (menu->barrilFrame + 1) % FRAMES_BARRIL;
     }
 
-    menu->posicaoBarril.x += VELOCIDADE_BARRIL *variacaoTempo;
+    menu->posicaoBarril.x += VELOCIDADE_BARRIL * variacaoTempo;
     if (menu->posicaoBarril.x > SCREEN_WIDTH + 100.0f)
     {
         menu->posicaoBarril.x = -550.0f;
     }
 }
 
+void executarJogo(void);
+
 static void iniciarNovoJogo(MENU *menu)
 {
     (void)menu;
-#ifdef _WIN32
-    ShellExecuteA(NULL, "open", "jogo.exe", NULL, NULL, 1);
-#else
-    system("./jogo &");
-#endif
+    executarJogo();
 }
 
 static void HandleMenuSelection(MENU *menu)
@@ -222,6 +221,17 @@ void atualizarMenu(MENU *menu, float variacaoTempo, int SCREEN_WIDTH, int SCREEN
         break;
 
     case TELA_NOVO_JOGO:
+        printf("CHEGUEI NO CASE TELA_NOVO_JOGO\n");
+        fflush(stdout);
+
+        executarJogo();
+
+        printf("VOLTEI DO JOGO\n");
+        fflush(stdout);
+
+        menu->telaAtual = TELA_MENU;
+        break;
+
     case TELA_RANKING:
         if (ShouldReturnToMenu(menu))
             menu->telaAtual = TELA_MENU;
@@ -311,7 +321,7 @@ static void desenharMenuScreen(const MENU *menu, int SCREEN_WIDTH, int SCREEN_HE
         Rectangle srcMario = {menu->frameInicial * (menu->recursos.marioCorrendo.width / FRAMES_MARIO_CORRENDO), 0.0f,
                               menu->recursos.marioCorrendo.width / FRAMES_MARIO_CORRENDO, (float)menu->recursos.marioCorrendo.height};
         Rectangle destMario = {menu->posicaoMario.x, menu->posicaoMario.y,
-                               srcMario.width * 4.2f, srcMario.height * 4.2f};
+                               srcMario.width * 4.2f, srcMario.height * 3.5f};
         DrawTexturePro(menu->recursos.marioCorrendo, srcMario, destMario, (Vector2){0.0f, 0.0f}, 0.0f, WHITE);
     }
     else
@@ -339,10 +349,6 @@ void desenharMenu(const MENU *menu, int SCREEN_WIDTH, int SCREEN_HEIGHT)
     {
     case TELA_MENU:
         desenharMenuScreen(menu, SCREEN_WIDTH, SCREEN_HEIGHT);
-        break;
-
-    case TELA_NOVO_JOGO:
-        DrawPlaceholderScreen(menu, "O JOGO ESTÁ RODANDO!", DARKBLUE, SCREEN_WIDTH, SCREEN_HEIGHT);
         break;
 
     case TELA_OPCOES:
