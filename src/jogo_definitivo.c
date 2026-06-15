@@ -70,17 +70,42 @@ char mapa[LINHA][COLUNA + 3]; // +3 para \n(*2 por causa do win) e para o \0
 
 
 Texture2D CarregaTex(const char *Path) {
-Image image = LoadImage(Path);     // Carrega do disco para a RAM
-ImageResize(&image, TAMANHO, TAMANHO);    // Redimensiona a imagem na RAM
-Texture2D tex = LoadTextureFromImage(image); // Envia para a GPU
-UnloadImage(image);                    // Limpa a RAM
-return tex;
+    Texture2D tex = LoadTexture(Path); // Carrega diretamente para a GPU
+    return tex;
 }
+
+// Desenha uma textura estática redimensionada para o retângulo de destino
+void DesenhaTex(Texture2D tex, Rectangle destino) {
+    DrawTexturePro(tex, (Rectangle){ 0, 0, (float)tex.width, (float)tex.height }, 
+                   destino, (Vector2){ 0, 0 }, 0.0f, WHITE);
+}
+
+// Desenha uma textura animada (sprite sheet horizontal) redimensionada para o retângulo de destino
+void DesenhaTexAnim(Texture2D tex, Rectangle destino, int contframes, int speed, bool inverte) {
+    int numFrames = tex.width / tex.height;
+    if (numFrames <= 0) numFrames = 1;
+    int frame = (contframes / speed) % numFrames;
+    float frameSize = (float)tex.height;
+    
+    Rectangle source = { (float)frame * frameSize, 0, frameSize, frameSize };
+    if (inverte) source.width = -source.width;
+    
+    DrawTexturePro(tex, source, destino, (Vector2){ 0, 0 }, 0.0f, WHITE);
+}
+
+// Retorna o retângulo de desenho padrão (TAMANHO x TAMANHO)
+Rectangle GetRect(float x, float y) {
+    return (Rectangle){ x, y, TAMANHO, TAMANHO };
+}
+
+int contframes = 0;
+int marioDir = 0; // 0 para direita, 1 para esquerda
 
 
 void fazchao(objeto *m){
     // Pergunta se o mario esta em cima do quadrado, então teleporta ele para cima e torna o chão verdadeiro
-    if (mario.linha >= TAMANHO * (m->linha - 1) && mario.linha <= TAMANHO * (m->linha - 0.3) && mario.coluna <= TAMANHO * (m->coluna + 0.6667) && mario.coluna >= TAMANHO * (m->coluna - 0.3334))
+    // Ajustado para ser simétrico e mais natural (Mario físico = 0.7 do TAMANHO)
+    if (mario.linha >= TAMANHO * (m->linha - 1) && mario.linha <= TAMANHO * (m->linha - 0.3) && mario.coluna <= TAMANHO * (m->coluna + 0.7) && mario.coluna >= TAMANHO * (m->coluna - 0.7))
     {
         mario.linha = TAMANHO * (m->linha - 1);
         chao = 1;
@@ -120,7 +145,7 @@ void fazparede(objeto *m)
 void fazescada(objeto *m)
 {
     // espaço em que o mario pode se movimentar a vontade
-    if (mario.linha >= TAMANHO * (m->linha - 1) && mario.linha <= TAMANHO * (m->linha + 1) && mario.coluna <= TAMANHO * (m->coluna + 0.6667) && mario.coluna >= TAMANHO * (m->coluna - 0.3334))
+    if (mario.linha >= TAMANHO * (m->linha - 1) && mario.linha <= TAMANHO * (m->linha + 1) && mario.coluna <= TAMANHO * (m->coluna + 0.6667) && mario.coluna >= TAMANHO * (m->coluna - 0.6667))
     {
         escada = 1;
         chao = 0;
@@ -130,8 +155,8 @@ void fazescada(objeto *m)
 
 void safezone(objeto *m)
 {
-    // Se entrar nele, a posição some, mas salva o spawpoint nessa posição, e assim vai atualziando conforme ele vai entrando em safezones
-    if ((mario.linha >= TAMANHO * (m->linha - 1)) && (mario.linha <= TAMANHO * (m->linha + 1)) && (mario.coluna <= TAMANHO * (m->coluna + 0.6667)) && mario.coluna >= TAMANHO * (m->coluna - 0.3334))
+    // Se entrar nele, a posição some, mas salva o spawpoint nessa posição
+    if ((mario.linha >= TAMANHO * (m->linha - 1)) && (mario.linha <= TAMANHO * (m->linha + 1)) && (mario.coluna <= TAMANHO * (m->coluna + 0.7)) && mario.coluna >= TAMANHO * (m->coluna - 0.7))
     {
         spawnpoint.linha = TAMANHO * m->linha;
         spawnpoint.coluna = TAMANHO * m->coluna;
@@ -142,7 +167,7 @@ void safezone(objeto *m)
 void fazinimigo(vilao *m, Texture2D *tex)
 {
     // pisou matou
-    if (mario.linha >= (m->linha - (TAMANHO * 1.2)) && mario.linha <= (m->linha - (TAMANHO * 0.5)) && mario.coluna <= (m->coluna + TAMANHO * (0.6667)) && mario.coluna >= (m->coluna - TAMANHO * (0.6667)))
+    if (mario.linha >= (m->linha - (TAMANHO * 1.2)) && mario.linha <= (m->linha - (TAMANHO * 0.5)) && mario.coluna <= (m->coluna + TAMANHO * 0.7) && mario.coluna >= (m->coluna - TAMANHO * 0.7))
     {
         velocidadeY = (FORCA_DO_PULO * 0.65);
         *m = inimigo_morto; // inimigo morto == constante, quando é pisado, ele é teleportado para fora de onde o mapa mostra
@@ -150,8 +175,7 @@ void fazinimigo(vilao *m, Texture2D *tex)
     }
 
     // encostou morreu
-    // ve se o mario é invuneravel, < 3 segundos, dai ele n morre, calcula se o mario esta encostando no inimigo, ele perde uma vida e volta pro inicio
-    else if ((invulnerabilidade < 0) && mario.linha >= (m->linha - (TAMANHO * 0.9999999)) && mario.linha <= (m->linha + (TAMANHO * 0.5)) && mario.coluna <= (m->coluna + (TAMANHO * 0.67)) && mario.coluna >= (m->coluna - (TAMANHO * 0.67)))
+    else if ((invulnerabilidade < 0) && mario.linha >= (m->linha - (TAMANHO * 0.8)) && mario.linha <= (m->linha + (TAMANHO * 0.5)) && mario.coluna <= (m->coluna + (TAMANHO * 0.7)) && mario.coluna >= (m->coluna - (TAMANHO * 0.7)))
     {
         vidas--;
         mario = spawnpoint;
@@ -189,7 +213,8 @@ void fazinimigo(vilao *m, Texture2D *tex)
     }
 
     // desenha
-    DrawTexture(*tex, m->coluna, m->linha, WHITE);
+    bool inverte = (m->mov == 'E');
+    DesenhaTexAnim(*tex, GetRect(m->coluna, m->linha), contframes, 10, inverte);
 }
 
 void desenha_objeto(objeto *m, TEX *tex)
@@ -201,34 +226,34 @@ void desenha_objeto(objeto *m, TEX *tex)
     // se for chao
     else if (m->tipo == 'Z')
     {   
-        DrawTexture(tex->Plataforma ,m->coluna * TAMANHO, m->linha * TAMANHO, WHITE);
-        fazchao(m); // função
+        DesenhaTex(tex->Plataforma, (Rectangle){ m->coluna * TAMANHO, m->linha * TAMANHO, TAMANHO, TAMANHO });
+        fazchao(m);
     }
     // se for parede
     else if (m->tipo == 'W')
     {
-        DrawTexture(tex->Parede ,m->coluna * TAMANHO, m->linha * TAMANHO, WHITE);
+        DesenhaTex(tex->Parede, (Rectangle){ m->coluna * TAMANHO, m->linha * TAMANHO, TAMANHO, TAMANHO });
         fazparede(m);
     }
     // se for escada
     else if (m->tipo == 'D' || m->tipo == 'H' || m->tipo == 'S')
     {
         
-        DrawTexture(tex->Escada ,m->coluna * TAMANHO, m->linha * TAMANHO, WHITE);
+        DesenhaTex(tex->Escada, (Rectangle){ m->coluna * TAMANHO, m->linha * TAMANHO, TAMANHO, TAMANHO });
         fazescada(m);
     }
     // se for o objetivo
     else if (m->tipo == 'F')
     {
         
-        DrawTexture(tex->Objetivo ,m->coluna * TAMANHO, m->linha * TAMANHO, WHITE);
+        DesenhaTex(tex->Objetivo, (Rectangle){ m->coluna * TAMANHO, m->linha * TAMANHO, TAMANHO, TAMANHO });
         objetivo.coluna = m->coluna * TAMANHO;
         objetivo.linha = m->linha * TAMANHO;
     }
     // se for uma safezone
     else if (m->tipo == 'N')
     {
-        DrawTexture(tex->Safezone ,m->coluna * TAMANHO, m->linha * TAMANHO, WHITE);
+        DesenhaTex(tex->Safezone, (Rectangle){ m->coluna * TAMANHO, m->linha * TAMANHO, TAMANHO, TAMANHO });
         safezone(m);
     }
 }
@@ -240,7 +265,7 @@ int main(void)
     SetTargetFPS(60);
 
     // 2. Carrega as texturas APENAS UMA VEZ
-    // Elas serão redimensionadas automaticamente para TAMANHO x TAMANHO pela sua função CarregaTex
+    // Elas serão redimensionadas automaticamente para TAMANHO x TAMANHO pela função CarregaTex
     Texture2D texMarioCorrendo = CarregaTex("assets/images/sprites/spriteMarioCorrendo.png");
     Texture2D texMarioSubindo = CarregaTex("assets/images/sprites/spriteMarioSubindo.png");
     Texture2D texMarioPulando = CarregaTex("assets/images/sprites/spriteMarioPulando.png");
@@ -318,20 +343,56 @@ int main(void)
         // 4. Loop da fase (do-while)
         do
         {
+            tempo = GetFrameTime();
+            personagem mario_referencial = mario;
+
             if (IsKeyPressed(KEY_TAB))
                 pausado = !pausado;
 
-            chao = 0;
-            escada = 0;
+            if (!pausado)
+            {
+                if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
+                    mario.coluna += (0.16 * TAMANHO);
+                    marioDir = 0;
+                }
+                if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
+                    mario.coluna -= (0.16 * TAMANHO);
+                    marioDir = 1;
+                }
+                if ((IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)) && (escada == 1))
+                    mario.linha -= (0.06 * TAMANHO);
+                if ((IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) && (escada == 1))
+                    mario.linha += (0.06 * TAMANHO);
+                if ((IsKeyDown(KEY_SPACE)) && (chao == 1))
+                    velocidadeY = FORCA_DO_PULO;
+                
+                if ((chao == 0) && (escada == 0))
+                    velocidadeY += GRAVIDADE * tempo;
+                
+                mario.linha -= velocidadeY * tempo;
 
+                if (velocidadeY < -vmax) velocidadeY = -vmax;
+                if (velocidadeYb < -vmax) velocidadeYb = -vmax;
+
+                invulnerabilidade--;
+                probabilidade++;
+                velocidadeYb += GRAVIDADE * tempo;
+                contframes++;
+            }
+
+            // Reposicionamento se sair das bordas
             if (mario.coluna >= TAMANHO * (COLUNA - 0.6667))
                 mario.coluna = TAMANHO * (COLUNA - 0.6667);
             else if (mario.coluna <= TAMANHO * (-0.3334))
                 mario.coluna = TAMANHO * (-0.3334);
 
-            BeginDrawing();
-            ClearBackground(RAYWHITE);
+            chao = 0;
+            escada = 0;
 
+            BeginDrawing();
+            ClearBackground(BLACK);
+
+            // 1. Desenha Cenário
             for (int l = 0; l < LINHA; l++)
             {
                 for (int c = 0; c < COLUNA; c++)
@@ -343,11 +404,13 @@ int main(void)
                 }
             }
 
+            // 2. Desenha Inimigos
             for (int k = 0; k < quant_inimigos; k++)
             {
                 fazinimigo(&inimigos[k], &texInimigo);
             }
 
+            // 3. Lógica e Desenho de Bombas
             if (i != (QUANT_mapas - 1))
                 for (int x = 0; x < 999; x++)
                 {
@@ -366,6 +429,8 @@ int main(void)
                     {
                         bomba[x].coluna = (rand() % (COLUNA * TAMANHO));
                         bomba[x].linha = (3 * TAMANHO);
+                        if(!pausado)
+                            velocidadeYb = 10 * TAMANHO;
                     }
                 }
 
@@ -381,10 +446,9 @@ int main(void)
                 if (!pausado)
                     bomba[z].linha -= velocidadeYb * tempo * 0.7;
                 
-                // Desenha bomba
-                DrawTexture(texBarril, bomba[z].coluna, bomba[z].linha, WHITE);
+                DesenhaTexAnim(texBarril, GetRect(bomba[z].coluna, bomba[z].linha), contframes, 10, false);
 
-                if ((invulnerabilidade < 0) && (mario.linha >= (bomba[z].linha - TAMANHO)) && (mario.linha <= (bomba[z].linha + TAMANHO)) && (mario.coluna <= (bomba[z].coluna + (TAMANHO * 0.6667))) && mario.coluna >= (bomba[z].coluna - (TAMANHO * 0.6667)))
+                if ((invulnerabilidade < 0) && (mario.linha >= (bomba[z].linha - TAMANHO)) && (mario.linha <= (bomba[z].linha + TAMANHO)) && (mario.coluna <= (bomba[z].coluna + (TAMANHO * 0.7))) && mario.coluna >= (bomba[z].coluna - (TAMANHO * 0.7)))
                 {
                     mario = spawnpoint;
                     vidas--;
@@ -392,11 +456,29 @@ int main(void)
                 }
             }
 
+            DesenhaTex(tex.Spawnpoint, GetRect(spawnpoint.coluna, spawnpoint.linha));
+
+            // 4. Desenha Mario
+            Rectangle marioRect = GetRect(mario.coluna, mario.linha);
+            if(chao && mario.coluna > mario_referencial.coluna)//andando para a direita
+                DesenhaTexAnim(texMarioCorrendo, marioRect, contframes, 10, false);
+            else if(chao && mario.coluna < mario_referencial.coluna)//andando para a esquerda
+                DesenhaTexAnim(texMarioCorrendo, marioRect, contframes, 10, true);
+            else if(chao && mario.coluna == mario_referencial.coluna)//parado
+                DesenhaTexAnim(texMarioCorrendo, marioRect, 0, 1, marioDir == 1);
+            else if(escada && mario.linha != mario_referencial.linha)//subindo ou descendo a escada
+                DesenhaTexAnim(texMarioSubindo, marioRect, contframes, 10, false);
+            else if(escada && mario.linha == mario_referencial.linha)//parado na escada
+                DesenhaTexAnim(texMarioSubindo, marioRect, 0, 1, false);
+            else if(!chao && !escada && mario.coluna > mario_referencial.coluna)// pulando para a direita
+                DesenhaTexAnim(texMarioPulando, marioRect, contframes, 10, false);
+            else if(!chao && !escada && mario.coluna < mario_referencial.coluna)//pulando para a esquerda
+                DesenhaTexAnim(texMarioPulando, marioRect, contframes, 10, true);
+            else//pulando sem se mover
+                DesenhaTexAnim(texMarioPulando, marioRect, contframes, 10, marioDir == 1);
+
             if (pausado)
                 DrawText("===== Pause =====", TAMANHO * COLUNA / 3, TAMANHO * LINHA / 2, TAMANHO, ORANGE);
-
-            DrawTexture(tex.Spawnpoint, spawnpoint.coluna, spawnpoint.linha, WHITE);
-            DrawTexture(texMarioCorrendo, mario.coluna, mario.linha, WHITE);
 
             EndDrawing();
 
@@ -409,6 +491,7 @@ int main(void)
 
             if ((mario.linha >= (objetivo.linha - TAMANHO)) && (mario.linha <= (objetivo.linha + (TAMANHO * 0.5))) && (mario.coluna <= (objetivo.coluna + (TAMANHO * 0.6667))) && mario.coluna >= (objetivo.coluna - (TAMANHO * 0.3334)))
             {
+                pontos+=(3000 * i);
                 break;
             }
 
@@ -417,31 +500,6 @@ int main(void)
                 break;
             }
 
-            if (!pausado)
-            {
-                if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
-                    mario.coluna += (0.16 * TAMANHO);
-                if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
-                    mario.coluna -= (0.16 * TAMANHO);
-                if ((IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)) && (escada == 1))
-                    mario.linha -= (0.06 * TAMANHO);
-                if ((IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) && (escada == 1))
-                    mario.linha += (0.06 * TAMANHO);
-                if ((IsKeyDown(KEY_SPACE)) && (chao == 1))
-                    velocidadeY = FORCA_DO_PULO;
-                if ((chao == 0) && (escada == 0))
-                    velocidadeY += GRAVIDADE * tempo;
-                
-                mario.linha -= velocidadeY * tempo;
-
-                if (velocidadeY < -vmax) velocidadeY = -vmax;
-                if (velocidadeYb < -vmax) velocidadeYb = -vmax;
-
-                invulnerabilidade--;
-                probabilidade++;
-                velocidadeYb += GRAVIDADE * tempo;
-                tempo = GetFrameTime();
-            }
 
         } while (!WindowShouldClose());
 
