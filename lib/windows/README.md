@@ -1,0 +1,1 @@
+Não sei se esse é o libraylib.a certo, por via das dúvidas coloque o seu aqui

@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build and Run",
+            "type": "shell",
+            "command": "make clean && make run",
+            "windows": {
+                "command": "mingw32-make clean && mingw32-make run"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "Executa make clean, make run usando o Makefile."
+        }
+    ]
+}
