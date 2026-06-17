@@ -3,7 +3,7 @@
 #include "../include/jogo_definitivo.h"
 
 #define SCREEN_WIDTH 850
-#define SCREEN_HEIGHT 650
+#define SCREEN_HEIGHT 730
 
 
 int main(void)
@@ -11,6 +11,7 @@ int main(void)
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Donkey Kong - Menu");
     SetTargetFPS(60);
+    SetExitKey(0);
     
     InitAudioDevice();
 
@@ -20,8 +21,11 @@ int main(void)
     carregarRecursosMenu(&menu);
     iniciarOpcoes();
 
-    while (!WindowShouldClose() && menu.telaAtual != TELA_SAIR)
+    while (menu.telaAtual != TELA_SAIR)
     {
+        if (WindowShouldClose())
+            solicitarSaidaMenu(&menu);
+
         float variacaoTempo = GetFrameTime();
         atualizarMenu(&menu,variacaoTempo, SCREEN_WIDTH, SCREEN_HEIGHT);
 

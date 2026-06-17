@@ -44,7 +44,7 @@ TARGET      = main$(EXT)
 #GAME_TARGET = jogo$(EXT)
 
 # ── Fontes ────────────────────────────────────────────────────────────────────
-SRCS      = $(SRC_DIR)/main.c $(SRC_DIR)/menu.c $(SRC_DIR)/opcoes.c $(SRC_DIR)/jogo_definitivo.c
+SRCS      = $(SRC_DIR)/main.c $(SRC_DIR)/menu.c $(SRC_DIR)/opcoes.c $(SRC_DIR)/ranking.c $(SRC_DIR)/jogo_definitivo.c
 #GAME_SRCS = $(SRC_DIR)/jogo_definitivo.c
 
 OBJS      = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)

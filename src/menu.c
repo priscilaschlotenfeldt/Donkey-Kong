@@ -13,12 +13,13 @@
 #include "../include/menu.h"
 #include "../include/opcoes.h"
 #include "../include/jogo_definitivo.h"
+#include "../include/ranking.h"
 
 #define FRAMES_MARIO_CORRENDO 4
 #define FRAMES_MARIO_ESCALANDO 3
 #define FRAMES_BARRIL 4
 #define FRAMES_DURACAO 0.1f
-#define DURACAO_ESCALAR 8.0f
+#define DURACAO_ESCALAR 10.0f
 #define VELOCIDADE_MARIO_MENU 150.0f
 #define VELOCIDADE_SUBIR 100.0f
 #define VELOCIDADE_DESCER 100.0f
@@ -38,15 +39,20 @@ void iniciarMenu(MENU *menu, int screenWidth, int screenHeight)
     menu->temporizadorFrame = 0.0f;
     menu->temporizadorEscalada = 0.0f;
     menu->temporizadorFrameBarril = 0.0f;
-    menu->posicaoMario = (Vector2){100.0f, 538.0f};
-    menu->posicaoAlvoEscalada = (Vector2){50.0f, 538.0f};
+    menu->posicaoMario = (Vector2){100.0f, 615.0f};
+    menu->posicaoAlvoEscalada = (Vector2){50.0f, 616.0f};
     menu->posicaoBarril = (Vector2){-200.0f, 538.0f};
     menu->cursorMouse = (Vector2){0.0f, 0.0f};
-    menu->btnJogar = (Rectangle){screenWidth / 2.0f - 100.0f, 240.0f, 200.0f, 50.0f};
-    menu->btnRanking = (Rectangle){screenWidth / 2.0f - 100.0f, 300.0f, 200.0f, 50.0f};
-    menu->btnOpcoes = (Rectangle){screenWidth / 2.0f - 100.0f, 360.0f, 200.0f, 50.0f};
-    menu->btnSair = (Rectangle){screenWidth / 2.0f - 100.0f, 420.0f, 200.0f, 50.0f};
-    menu->btnVoltar = (Rectangle){20.0f, 20.0f, 100.0f, 40.0f};
+    menu->btnJogar = (Rectangle){screenWidth / 2.0f - 100.0f, 280.0f, 200.0f, 50.0f};
+    menu->btnRanking = (Rectangle){screenWidth / 2.0f - 100.0f, 340.0f, 200.0f, 50.0f};
+    menu->btnOpcoes = (Rectangle){screenWidth / 2.0f - 100.0f, 400.0f, 200.0f, 50.0f};
+    menu->btnSair = (Rectangle){screenWidth / 2.0f - 100.0f, 460.0f, 200.0f, 50.0f};
+    menu->btnVoltar = (Rectangle){20.0f, 20.0f, 130.0f, 40.0f};
+    menu->btnConfirmarSim = (Rectangle){screenWidth / 2.0f - 130.0f, screenHeight / 2.0f + 35.0f, 110.0f, 40.0f};
+    menu->btnConfirmarNao = (Rectangle){screenWidth / 2.0f + 20.0f, screenHeight / 2.0f + 35.0f, 110.0f, 40.0f};
+    menu->confirmarSaida = false;
+    menu->telaAntesConfirmar = TELA_MENU;
+    menu->confirmacaoSelecionada = 1;
 }
 
 void carregarRecursosMenu(MENU *menu)
@@ -61,7 +67,7 @@ void carregarRecursosMenu(MENU *menu)
 
     menu->recursos.musicaMenu = LoadMusicStream("assets/audio/DKThemeMenu.mp3");
     PlayMusicStream(menu->recursos.musicaMenu);
-    SetMusicVolume(menu->recursos.musicaMenu, 0.6f);
+    SetMusicVolume(menu->recursos.musicaMenu, obterVolumeMusica());
 }
 
 void descarregarRecursosMenu(MENU *menu)
@@ -122,14 +128,14 @@ static void atualizarAnimacaoMenu(MENU *menu, float variacaoTempo, int SCREEN_WI
         }
         else if (menu->etapaDescida == 1)
         {
-            if (menu->posicaoMario.y < 538.0f)
+            if (menu->posicaoMario.y < 616.0f)
             {
                 menu->posicaoMario.y += VELOCIDADE_DESCER * variacaoTempo;
-                if (menu->posicaoMario.y > 538.0f)
-                    menu->posicaoMario.y = 538.0f;
+                if (menu->posicaoMario.y > 616.0f)
+                    menu->posicaoMario.y = 616.0f;
             }
 
-            if (menu->posicaoMario.y == 538.0f)
+            if (menu->posicaoMario.y == 616.0f)
             {
                 menu->animacaoAtual = ANIMACAO_CORRENDO;
                 menu->frameInicial = 0;
@@ -167,51 +173,122 @@ static void atualizarAnimacaoMenu(MENU *menu, float variacaoTempo, int SCREEN_WI
     menu->posicaoBarril.x += VELOCIDADE_BARRIL * variacaoTempo;
     if (menu->posicaoBarril.x > SCREEN_WIDTH + 100.0f)
     {
-        menu->posicaoBarril.x = -550.0f;
+        menu->posicaoBarril.x = -250.0f;
     }
 }
 
-void executarJogo(void);
-
 static void iniciarNovoJogo(MENU *menu)
 {
-    (void)menu;
-    executarJogo();
+    bool sairPrograma = executarJogo();
+    menu->telaAtual = sairPrograma ? TELA_SAIR : TELA_MENU;
+}
+
+void solicitarSaidaMenu(MENU *menu)
+{
+    if (menu->confirmarSaida)
+        return;
+
+    menu->confirmarSaida = true;
+    menu->telaAntesConfirmar = menu->telaAtual;
+    menu->confirmacaoSelecionada = 1; // começa em NÃO para evitar saída acidental
+}
+
+static bool ClicouBotao(Rectangle botao, Vector2 mouse)
+{
+    return CheckCollisionPointRec(mouse, botao) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+}
+
+static void AtualizarConfirmacaoSaida(MENU *menu)
+{
+    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D))
+        menu->confirmacaoSelecionada = 1 - menu->confirmacaoSelecionada;
+
+    if (CheckCollisionPointRec(menu->cursorMouse, menu->btnConfirmarSim))
+        menu->confirmacaoSelecionada = 0;
+    else if (CheckCollisionPointRec(menu->cursorMouse, menu->btnConfirmarNao))
+        menu->confirmacaoSelecionada = 1;
+
+    bool confirmou = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) ||
+                     IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+    if (confirmou)
+    {
+        if (menu->confirmacaoSelecionada == 0 &&
+            (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) || ClicouBotao(menu->btnConfirmarSim, menu->cursorMouse)))
+        {
+            menu->telaAtual = TELA_SAIR;
+        }
+        else if (menu->confirmacaoSelecionada == 1 &&
+                 (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) || ClicouBotao(menu->btnConfirmarNao, menu->cursorMouse)))
+        {
+            menu->confirmarSaida = false;
+            menu->telaAtual = menu->telaAntesConfirmar;
+        }
+    }
+
+    if (IsKeyPressed(KEY_ESCAPE))
+    {
+        menu->confirmarSaida = false;
+        menu->telaAtual = menu->telaAntesConfirmar;
+    }
 }
 
 static void HandleMenuSelection(MENU *menu)
 {
-    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S))
-    {
-        menu->botaoSelecionado = (menu->botaoSelecionado + 1) % 4;
-    }
-    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W))
-    {
-        menu->botaoSelecionado = (menu->botaoSelecionado - 1 + 4) % 4;
-    }
+    if (CheckCollisionPointRec(menu->cursorMouse, menu->btnJogar))
+        menu->botaoSelecionado = 0;
+    else if (CheckCollisionPointRec(menu->cursorMouse, menu->btnRanking))
+        menu->botaoSelecionado = 1;
+    else if (CheckCollisionPointRec(menu->cursorMouse, menu->btnOpcoes))
+        menu->botaoSelecionado = 2;
+    else if (CheckCollisionPointRec(menu->cursorMouse, menu->btnSair))
+        menu->botaoSelecionado = 3;
 
-    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER))
-    {
-        if (menu->botaoSelecionado == 0)
-            iniciarNovoJogo(menu);
-        else if (menu->botaoSelecionado == 1)
-            menu->telaAtual = TELA_RANKING;
-        else if (menu->botaoSelecionado == 2)
-            menu->telaAtual = TELA_OPCOES;
-        else if (menu->botaoSelecionado == 3)
-            menu->telaAtual = TELA_SAIR;
-    }
+    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S))
+        menu->botaoSelecionado = (menu->botaoSelecionado + 1) % 4;
+
+    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W))
+        menu->botaoSelecionado = (menu->botaoSelecionado - 1 + 4) % 4;
+
+    bool confirmar = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) ||
+                     IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+    if (!confirmar)
+        return;
+
+    if (menu->botaoSelecionado == 0)
+        iniciarNovoJogo(menu);
+    else if (menu->botaoSelecionado == 1)
+        menu->telaAtual = TELA_RANKING;
+    else if (menu->botaoSelecionado == 2)
+        menu->telaAtual = TELA_OPCOES;
+    else if (menu->botaoSelecionado == 3)
+        solicitarSaidaMenu(menu);
 }
 
 static bool ShouldReturnToMenu(const MENU *menu)
 {
-    return IsKeyPressed(KEY_ESCAPE) ||
-           (CheckCollisionPointRec(menu->cursorMouse, menu->btnVoltar) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
+    return ClicouBotao(menu->btnVoltar, menu->cursorMouse);
 }
 
 void atualizarMenu(MENU *menu, float variacaoTempo, int SCREEN_WIDTH, int SCREEN_HEIGHT)
 {
+    (void)SCREEN_HEIGHT;
     menu->cursorMouse = GetMousePosition();
+
+    if (menu->confirmarSaida)
+    {
+        AtualizarConfirmacaoSaida(menu);
+        return;
+    }
+
+    if (IsKeyPressed(KEY_ESCAPE))
+    {
+        solicitarSaidaMenu(menu);
+        return;
+    }
+
+    SetMusicVolume(menu->recursos.musicaMenu, obterVolumeMusica());
 
     switch (menu->telaAtual)
     {
@@ -224,17 +301,20 @@ void atualizarMenu(MENU *menu, float variacaoTempo, int SCREEN_WIDTH, int SCREEN
         printf("CHEGUEI NO CASE TELA_NOVO_JOGO\n");
         fflush(stdout);
 
-        executarJogo();
+        if (executarJogo())
+            menu->telaAtual = TELA_SAIR;
+        else
+            menu->telaAtual = TELA_MENU;
 
         printf("VOLTEI DO JOGO\n");
         fflush(stdout);
-
-        menu->telaAtual = TELA_MENU;
         break;
 
     case TELA_RANKING:
         if (ShouldReturnToMenu(menu))
             menu->telaAtual = TELA_MENU;
+        if (ClicouBotao(menu->btnSair, menu->cursorMouse))
+            solicitarSaidaMenu(menu);
         break;
 
     case TELA_OPCOES:
@@ -296,25 +376,25 @@ static void desenharMenuScreen(const MENU *menu, int SCREEN_WIDTH, int SCREEN_HE
 {
     float scale = 0.4f;
     float tituloX = SCREEN_WIDTH / 2.0f - (menu->recursos.titulo.width * scale) / 2.0f;
-    DrawTextureEx(menu->recursos.titulo, (Vector2){tituloX, 30.0f}, 0.0f, scale, WHITE);
+    DrawTextureEx(menu->recursos.titulo, (Vector2){tituloX, 50.0f}, 0.0f, scale, WHITE);
 
     float backgroundScale = 1.0f;
     float backgroundX = SCREEN_WIDTH / 2.0f - (menu->recursos.background.width * backgroundScale) / 2.0f;
-    DrawTextureEx(menu->recursos.background, (Vector2){backgroundX, 605.0f}, 0.0f, backgroundScale, WHITE);
+    DrawTextureEx(menu->recursos.background, (Vector2){backgroundX, 680.0f}, 0.0f, backgroundScale, WHITE);
 
     float escadaScale = 0.4f;
     float escadaXLeft = SCREEN_WIDTH / 2.5f - (menu->recursos.escada.width * escadaScale) / 1.12f;
-    DrawTextureEx(menu->recursos.escada, (Vector2){escadaXLeft, -93.0f}, 0.0f, escadaScale, WHITE);
+    DrawTextureEx(menu->recursos.escada, (Vector2){escadaXLeft, -18.0f}, 0.0f, escadaScale, WHITE);
 
     float escadaXRight = SCREEN_WIDTH / 0.945f - (menu->recursos.escada.width * escadaScale) / 2.5f;
-    DrawTextureEx(menu->recursos.escada, (Vector2){escadaXRight, -93.0f}, 0.0f, escadaScale, WHITE);
+    DrawTextureEx(menu->recursos.escada, (Vector2){escadaXRight, -18.0f}, 0.0f, escadaScale, WHITE);
 
     Rectangle srcBarrel = {menu->barrilFrame * (menu->recursos.barrilRolando.width / FRAMES_BARRIL), 0.0f,
                            menu->recursos.barrilRolando.width / FRAMES_BARRIL, (float)menu->recursos.barrilRolando.height};
     float barrelScale = 4.5f;
     Rectangle destBarrel = {menu->posicaoBarril.x, menu->posicaoBarril.y - menu->recursos.barrilRolando.height * barrelScale,
                             srcBarrel.width * barrelScale, menu->recursos.barrilRolando.height * barrelScale};
-    DrawTexturePro(menu->recursos.barrilRolando, srcBarrel, destBarrel, (Vector2){0.0f, -85.0f}, 0.0f, WHITE);
+    DrawTexturePro(menu->recursos.barrilRolando, srcBarrel, destBarrel, (Vector2){0.0f, -160.0f}, 0.0f, WHITE);
 
     if (menu->animacaoAtual == ANIMACAO_CORRENDO)
     {
@@ -336,11 +416,79 @@ static void desenharMenuScreen(const MENU *menu, int SCREEN_WIDTH, int SCREEN_HE
     desenharMenuButtons(menu);
 }
 
-static void DrawPlaceholderScreen(const MENU *menu, const char *text, Color background, int SCREEN_WIDTH, int SCREEN_HEIGHT)
+static void DrawButtonText(Rectangle rect, const char *texto, bool selected, Vector2 mouse)
 {
-    ClearBackground(background);
-    DrawText(text, SCREEN_WIDTH / 2 - MeasureText(text, 30) / 2, SCREEN_HEIGHT / 2, 30, WHITE);
-    DrawBackButton(menu);
+    Color cor = (selected || CheckCollisionPointRec(mouse, rect)) ? LIGHTGRAY : GRAY;
+    DrawRectangleRec(rect, cor);
+    DrawRectangleLinesEx(rect, 2, selected ? RED : DARKGRAY);
+    DrawText(texto,
+             (int)(rect.x + rect.width / 2.0f - MeasureText(texto, 18) / 2.0f),
+             (int)(rect.y + rect.height / 2.0f - 9.0f),
+             18,
+             BLACK);
+}
+
+static void DrawRankingScreen(const MENU *menu, int SCREEN_WIDTH, int SCREEN_HEIGHT)
+{
+    ClearBackground(DARKPURPLE);
+
+    const char *titulo = "RANKING - TOP 10";
+    DrawText(titulo, SCREEN_WIDTH / 2 - MeasureText(titulo, 36) / 2, 45, 36, WHITE);
+
+    DrawText("POS", 110, 120, 22, YELLOW);
+    DrawText("NOME", 190, 120, 22, YELLOW);
+    DrawText("PONTOS", 470, 120, 22, YELLOW);
+    DrawText("TEMPO", 620, 120, 22, YELLOW);
+
+    TIPO_PLACAR ranking[TOP_RANKING];
+    int quantidade = carregarRanking(ranking, TOP_RANKING);
+
+    if (quantidade == 0)
+    {
+        const char *msg = "Nenhum placar salvo ainda.";
+        DrawText(msg, SCREEN_WIDTH / 2 - MeasureText(msg, 24) / 2, 250, 24, WHITE);
+    }
+    else
+    {
+        for (int i = 0; i < quantidade && i < TOP_RANKING; i++)
+        {
+            char linha[128];
+            int y = 165 + i * 38;
+
+            sprintf(linha, "%02d", i + 1);
+            DrawText(linha, 115, y, 22, WHITE);
+
+            DrawText(ranking[i].nome, 190, y, 22, WHITE);
+
+            sprintf(linha, "%d", ranking[i].pontos);
+            DrawText(linha, 480, y, 22, WHITE);
+
+            sprintf(linha, "%.2fs", ranking[i].tempo);
+            DrawText(linha, 620, y, 22, WHITE);
+        }
+    }
+
+    DrawButtonText(menu->btnVoltar, "VOLTAR", false, menu->cursorMouse);
+    DrawButtonText(menu->btnSair, "SAIR", false, menu->cursorMouse);
+}
+
+static void DrawPopupConfirmacaoSaida(const MENU *menu, int SCREEN_WIDTH, int SCREEN_HEIGHT)
+{
+    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 160});
+
+    Rectangle popup = {SCREEN_WIDTH / 2.0f - 230.0f, SCREEN_HEIGHT / 2.0f - 95.0f, 460.0f, 190.0f};
+    DrawRectangleRec(popup, (Color){30, 30, 30, 245});
+    DrawRectangleLinesEx(popup, 3, RED);
+
+    const char *pergunta = "Deseja mesmo sair?";
+    DrawText(pergunta,
+             SCREEN_WIDTH / 2 - MeasureText(pergunta, 28) / 2,
+             (int)popup.y + 35,
+             28,
+             WHITE);
+
+    DrawButtonText(menu->btnConfirmarSim, "SIM", menu->confirmacaoSelecionada == 0, menu->cursorMouse);
+    DrawButtonText(menu->btnConfirmarNao, "NÃO", menu->confirmacaoSelecionada == 1, menu->cursorMouse);
 }
 
 void desenharMenu(const MENU *menu, int SCREEN_WIDTH, int SCREEN_HEIGHT)
@@ -356,10 +504,13 @@ void desenharMenu(const MENU *menu, int SCREEN_WIDTH, int SCREEN_HEIGHT)
         break;
 
     case TELA_RANKING:
-        DrawPlaceholderScreen(menu, "TELA DE RANKING", DARKPURPLE, SCREEN_WIDTH, SCREEN_HEIGHT);
+        DrawRankingScreen(menu, SCREEN_WIDTH, SCREEN_HEIGHT);
         break;
 
     default:
         break;
     }
+
+    if (menu->confirmarSaida)
+        DrawPopupConfirmacaoSaida(menu, SCREEN_WIDTH, SCREEN_HEIGHT);
 }

@@ -1,6 +1,7 @@
 #ifndef MENU_H
 #define MENU_H
 
+#include <stdbool.h>
 #include "raylib.h"
 
 typedef enum telas_de_jogo
@@ -54,6 +55,12 @@ typedef struct menu
     Rectangle btnOpcoes;
     Rectangle btnSair;
     Rectangle btnVoltar;
+    Rectangle btnConfirmarSim;
+    Rectangle btnConfirmarNao;
+
+    bool confirmarSaida;
+    TELAS_DO_JOGO telaAntesConfirmar;
+    int confirmacaoSelecionada;
 
 } MENU;
 
@@ -62,5 +69,6 @@ void carregarRecursosMenu(MENU *menu);
 void descarregarRecursosMenu(MENU *menu);
 void atualizarMenu(MENU *menu, float dt, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 void desenharMenu(const MENU *menu, int SCREEN_WIDTH, int SCREEN_HEIGHT);
+void solicitarSaidaMenu(MENU *menu);
 
 #endif 
